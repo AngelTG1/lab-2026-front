@@ -2,12 +2,13 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 type CreateUserFormProps = {
-  onSubmit: (values: { userName: string; password: string }) => Promise<void>;
+  onSubmit: (values: { userName: string; email: string; password: string }) => Promise<void>;
   loading?: boolean;
 };
 
 export function CreateUserForm({ onSubmit, loading = false }: CreateUserFormProps) {
   const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -17,9 +18,10 @@ export function CreateUserForm({ onSubmit, loading = false }: CreateUserFormProp
     setError(null);
     setSuccess(null);
     try {
-      await onSubmit({ userName, password });
+      await onSubmit({ userName, email, password });
       setSuccess('Usuario creado correctamente');
       setUserName('');
+      setEmail('');
       setPassword('');
     } catch (err: any) {
       setError(err?.message || 'No se pudo crear el usuario');
@@ -41,6 +43,18 @@ export function CreateUserForm({ onSubmit, loading = false }: CreateUserFormProp
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
           placeholder="nuevo usuario"
+          required
+        />
+      </label>
+
+      <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+        <span>Correo electrónico</span>
+        <input
+          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-base text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/60"
+          type="text"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Correo electrónico"
           required
         />
       </label>

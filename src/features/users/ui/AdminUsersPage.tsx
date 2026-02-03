@@ -49,16 +49,17 @@ export function AdminUsersPage() {
     // Try parse as objects (using headers)
     const objRows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-    let items: Array<{ userName?: string; password?: string }> = [];
+    let items: Array<{ userName?: string; password?: string; email?: string }> = [];
 
     if (objRows.length > 0 && typeof objRows[0] === 'object' && !Array.isArray(objRows[0])) {
       const headerKeys = Object.keys(objRows[0]);
       const normalize = (s: string) => s.toLowerCase().replace(/\s|_/g, '');
       const userKey = headerKeys.find((k) => ['username', 'user', 'username', 'usuario', 'userName'.toLowerCase()].includes(normalize(k)));
+      const emailKey = headerKeys.find((k) => ['email', 'correo', 'correo electrónico'].includes(normalize(k)));
       const passKey = headerKeys.find((k) => ['password', 'pass', 'contraseña', 'clave'].includes(normalize(k)));
 
-      if (userKey && passKey) {
-        items = objRows.map((r) => ({ userName: String(r[userKey] ?? '').trim(), password: String(r[passKey] ?? '').trim() }));
+      if (userKey && emailKey && passKey) {
+        items = objRows.map((r) => ({ userName: String(r[userKey] ?? '').trim(), email: String(r[emailKey] ?? '').trim(), password: String(r[passKey] ?? '').trim() }));
       } else {
         // Fallback: try common header names
         const guessedUserKey = headerKeys.find((k) => normalize(k).includes('user'));
@@ -99,7 +100,7 @@ export function AdminUsersPage() {
         continue;
       }
       try {
-        await createUserUsecase.execute({ userName: it.userName, password: it.password });
+        await createUserUsecase.execute({ userName: it.userName, password: it.password, email: it.email });
         successes.push(it.userName);
       } catch (err: any) {
         failures.push(`${it.userName}: ${err?.message || 'error'}`);
