@@ -12,6 +12,7 @@ export function PginaLogTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchLogs = async () => {
     setError(null);
@@ -36,13 +37,32 @@ export function PginaLogTable() {
     if (page > maxPage) setPage(maxPage);
   }, [entries.length, page]);
 
-  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
-  const visible = entries.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const filteredEntries = entries.filter(entry => {
+    const message = entry.message?.toLowerCase() ?? '';
+    const host = entry.host?.toLowerCase() ?? '';
+    const searchLower = searchTerm.toLowerCase();
+    return message.includes(searchLower) || host.includes(searchLower);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
+  const visible = filteredEntries.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-        <h2 className="text-lg font-semibold text-slate-900">Actividad pGina</h2>
+        <div className="flex items-center gap-3 flex-1">
+          <h2 className="text-lg font-semibold text-slate-900 whitespace-nowrap">Actividad pGina</h2>
+          <input
+            type="text"
+            placeholder="Buscar por mensaje o usuario..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(0);
+            }}
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         <button
           type="button"
           onClick={fetchLogs}
@@ -76,6 +96,12 @@ export function PginaLogTable() {
                   No hay registros disponibles.
                 </td>
               </tr>
+            ) : filteredEntries.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-4 text-center text-slate-600">
+                  No hay registros que coincidan con la búsqueda.
+                </td>
+              </tr>
             ) : visible.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-4 text-center text-slate-600">
@@ -100,7 +126,7 @@ export function PginaLogTable() {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
         <span>
-          Página {page + 1} de {totalPages} • {entries.length} registros
+          Página {page + 1} de {totalPages} • {filteredEntries.length} registros
         </span>
         <div className="flex items-center gap-2">
           <button

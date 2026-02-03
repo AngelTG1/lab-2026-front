@@ -25,6 +25,7 @@ function formatDate(d?: Date | string) {
 
 export function UserTable({ users, loading, error, onRefresh }: UserTableProps) {
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
   const PAGE_SIZE = 10;
 
   useEffect(() => {
@@ -32,12 +33,30 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
     if (page > maxPage) setPage(maxPage);
   }, [users.length, page]);
 
-  const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
-  const visibleUsers = users.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const filteredUsers = users.filter(user => {
+    const fullName = (user as any).fullName ?? user.userName;
+    const email = user.email ?? '';
+    const searchLower = searchTerm.toLowerCase();
+    return fullName.toLowerCase().includes(searchLower) || email.toLowerCase().includes(searchLower);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const visibleUsers = filteredUsers.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <div className="  ">
-      
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200">
+        <input
+          type="text"
+          placeholder="Buscar por nombre o correo..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(0);
+          }}
+          className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
       {error ? <p className="px-4 py-3 text-sm text-red-600">{error}</p> : null}
 
@@ -65,6 +84,12 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center text-slate-600">
                   No hay usuarios para mostrar.
+                </td>
+              </tr>
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-8 text-center text-slate-600">
+                  No hay usuarios que coincidan con la búsqueda.
                 </td>
               </tr>
             ) : visibleUsers.length === 0 ? (
