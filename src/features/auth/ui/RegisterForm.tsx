@@ -16,7 +16,12 @@ export function RegisterForm({ onSubmit, loading = false }: RegisterFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const isFormValid = username.trim() && fullName.trim() && email.trim() && password && confirmPassword && isAdmin;
+  const isFormValid =
+    username.trim().length > 0 &&
+    fullName.trim().length > 0 &&
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    password === confirmPassword;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -84,7 +89,6 @@ export function RegisterForm({ onSubmit, loading = false }: RegisterFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="correo@ejemplo.com"
-          required
         />
       </label>
 
