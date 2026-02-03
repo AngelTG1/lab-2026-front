@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { FaUserTie } from "react-icons/fa";
 
 function Header() {
-    const { isAuthenticated, isAdmin, logout, user } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const matches = useMatches();
     const hideShell = matches.some((m) => m.handle && (m.handle as any).hideShell);
     if (hideShell) {
@@ -24,7 +24,7 @@ function Header() {
                                 <div className=' bg-[#C9E6E4] w-7 h-7 rounded-sm flex justify-center items-center '>
                                     <FaUserTie className='text-black ' size={19} />
                                 </div>
-                                <span className=''>{user ? `${user.username}` : ''}</span>
+                                <span className=''>{user ? `${user.fullName}` : ''}</span>
                             </div>
 
                         </>

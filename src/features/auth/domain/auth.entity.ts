@@ -1,6 +1,7 @@
 export type AuthProps = {
   id: string;
   username: string;
+  fullName: string;
   email?: string | null;
   passwordHash: string;
   isAdmin: boolean;
@@ -11,6 +12,7 @@ export type AuthProps = {
 export type AuthUser = {
   id: string;
   username: string;
+  fullName: string;
   email?: string | null;
   isAdmin: boolean;
 };
@@ -23,6 +25,7 @@ export type AuthSession = {
 export class Auth {
   readonly id: string;
   username: string;
+  fullName: string;
   email?: string | null;
   passwordHash: string;
   isAdmin: boolean;
@@ -32,6 +35,7 @@ export class Auth {
   constructor(props: AuthProps) {
     this.id = props.id;
     this.username = props.username;
+    this.fullName = props.fullName;
     this.email = props.email ?? null;
     this.passwordHash = props.passwordHash;
     this.isAdmin = props.isAdmin;
@@ -43,6 +47,7 @@ export class Auth {
     return {
       id: this.id,
       username: this.username,
+      fullName: this.fullName,
       email: this.email,
       passwordHash: this.passwordHash,
       isAdmin: this.isAdmin,

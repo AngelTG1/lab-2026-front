@@ -1,5 +1,5 @@
 import type { AuthSession } from '../domain/auth.entity';
-import type { AuthRepository, LoginInput } from '../domain/auth.repository';
+import type { AuthRepository, LoginInput, RegisterInput } from '../domain/auth.repository';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
@@ -31,9 +31,55 @@ class HttpAuthRepository implements AuthRepository {
       user: {
         id: data.user.id,
         username: data.user.username,
+        fullName: data.user.fullName,
         email: data.user.email ?? null,
         isAdmin: Boolean(data.user.isAdmin),
       },
+    };
+  }
+
+  async register(input: RegisterInput): Promise<{ id: string; username: string; fullName: string; email?: string | null; isAdmin: boolean }> {
+    const token = localStorage.getItem('lab-register-front.auth');
+    const authData = token ? JSON.parse(token) : null;
+    const bearerToken = authData?.state?.token;
+
+    if (!bearerToken) {
+      throw new Error('No autorizado. Debe iniciar sesión primero');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${bearerToken}`,
+      },
+      body: JSON.stringify({
+        username: input.username,
+        fullName: input.fullName,
+        email: input.email ?? null,
+        password: input.password,
+        isAdmin: input.isAdmin ?? false,
+      }),
+    });
+
+    if (!response.ok) {
+      let message = 'No se pudo registrar el usuario';
+      try {
+        const errorBody = await response.json();
+        if (errorBody?.message) message = errorBody.message;
+      } catch {
+        // ignore parse errors and use default message
+      }
+      throw new Error(message);
+    }
+
+    const data = await response.json();
+    return {
+      id: data.id,
+      username: data.username,
+      fullName: data.fullName,
+      email: data.email ?? null,
+      isAdmin: Boolean(data.isAdmin),
     };
   }
 }
