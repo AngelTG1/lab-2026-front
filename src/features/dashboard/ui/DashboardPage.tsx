@@ -7,6 +7,10 @@ import type { TimePeriod } from './components/TimePeriodFilter';
 import { TimePeriodFilter } from './components/TimePeriodFilter';
 import { StatisticCard } from './components/StatisticCard';
 import { MachineStatsTable } from './components/MachineStatsTable';
+import { HiOutlineComputerDesktop } from "react-icons/hi2";
+import { IoAccessibilityOutline } from "react-icons/io5";
+import { RiAdminLine } from "react-icons/ri";
+
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -88,16 +92,19 @@ export function DashboardPage() {
           title="Total de Accesos"
           value={statistics.totalAccess}
           description={`En ${selectedPeriod === '7days' ? 'los últimos 7 días' : selectedPeriod === '30days' ? 'los últimos 30 días' : selectedPeriod === 'week' ? 'esta semana' : 'este mes'}`}
+          icon={<IoAccessibilityOutline size={27} />}
         />
         <StatisticCard
           title="Computadoras Activas"
           value={statistics.totalMachines}
           description="Con registros en el período"
+          icon={<HiOutlineComputerDesktop size={27} />}
         />
         <StatisticCard
           title="Usuarios Únicos"
           value={statistics.uniqueUsers}
           description="Diferentes usuarios detectados"
+          icon={<RiAdminLine size={27} />}
         />
       </div>
 

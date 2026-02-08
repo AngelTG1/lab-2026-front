@@ -16,3 +16,9 @@
     @apply text-inherit no-underline;
   }
 }
+
+@theme {
+  --color-lightGray: #D4D4D4;
+  --color-grayLight: #F9F9FB;
+  --color-purple: #715DB4;
+}
