@@ -16,6 +16,11 @@ export interface DashboardStatistics {
   machineStats: MachineStatistics[];
 }
 
+export interface MonthlyStats {
+  month: string;
+  accesses: number;
+}
+
 export class CalculateStatisticsUsecase {
   execute(logs: PginaLog[], startDate: Date, endDate: Date): DashboardStatistics {
     // Filtrar logs por rango de fechas
@@ -114,5 +119,48 @@ export class CalculateStatisticsUsecase {
 
   getDateRangeForPeriod(period: '7days' | '30days' | 'month' | 'week'): { start: Date; end: Date } {
     return this.getDateRange(period);
+  }
+
+  calculateMonthlyAccess(logs: PginaLog[], year?: number): MonthlyStats[] {
+    const monthlyMap = new Map<string, number>();
+    
+    // Usar el año actual si no se proporciona uno
+    const selectedYear = year || new Date().getFullYear();
+    
+    // Meses en orden de enero a diciembre
+    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+    // Inicializar los 12 meses del año
+    months.forEach((month) => {
+      monthlyMap.set(month, 0);
+    });
+
+    // Contar accesos por mes del año seleccionado
+    logs.forEach((log) => {
+      const logDate = new Date(log.timeStamp);
+      // Solo contar logs del año seleccionado
+      if (logDate.getFullYear() === selectedYear) {
+        const monthIndex = logDate.getMonth();
+        const monthKey = months[monthIndex];
+        
+        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + 1);
+      }
+    });
+
+    return months.map((month) => ({
+      month: month.charAt(0).toUpperCase() + month.slice(1),
+      accesses: monthlyMap.get(month) || 0,
+    }));
+  }
+
+  getAvailableYears(logs: PginaLog[]): number[] {
+    const yearsSet = new Set<number>();
+    
+    logs.forEach((log) => {
+      const logDate = new Date(log.timeStamp);
+      yearsSet.add(logDate.getFullYear());
+    });
+
+    return Array.from(yearsSet).sort((a, b) => a - b);
   }
 }

@@ -1,5 +1,3 @@
-import React from 'react';
-
 export type TimePeriod = '7days' | '30days' | 'month' | 'week';
 
 interface TimePeriodFilterProps {

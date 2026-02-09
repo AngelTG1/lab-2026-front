@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import { pginaLogRepository } from '../../pginalog/infrastructure/pginalog.api';
 import { GetPginaLogUsecase } from '../../pginalog/application/get-pginalog.usecase';
-import { CalculateStatisticsUsecase, type DashboardStatistics, type MachineStatistics } from '../application/calculate-statistics.usecase';
+import { CalculateStatisticsUsecase, type DashboardStatistics, type MachineStatistics, type MonthlyStats } from '../application/calculate-statistics.usecase';
 import type { TimePeriod } from './components/TimePeriodFilter';
 import { TimePeriodFilter } from './components/TimePeriodFilter';
 import { StatisticCard } from './components/StatisticCard';
 import { MachineStatsTable } from './components/MachineStatsTable';
+import { MonthlyAccessChart } from './components/MonthlyAccessChart';
 import { HiOutlineComputerDesktop } from "react-icons/hi2";
 import { IoAccessibilityOutline } from "react-icons/io5";
 import { RiAdminLine } from "react-icons/ri";
@@ -15,12 +16,15 @@ import { RiAdminLine } from "react-icons/ri";
 export function DashboardPage() {
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('7days');
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [statistics, setStatistics] = useState<DashboardStatistics>({
     totalAccess: 0,
     totalMachines: 0,
     uniqueUsers: 0,
     machineStats: [],
   });
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [machineStatsData, setMachineStatsData] = useState<Array<{
     machine: string;
     totalAccess: number;
@@ -47,6 +51,14 @@ export function DashboardPage() {
 
         setStatistics(stats);
 
+        // Calcular estadísticas mensuales para el año seleccionado
+        const monthly = statsUsecase.calculateMonthlyAccess(logs, selectedYear);
+        setMonthlyStats(monthly);
+
+        // Obtener años disponibles
+        const years = statsUsecase.getAvailableYears(logs);
+        setAvailableYears(years);
+
         // Preparar datos para la tabla
         const tableData = stats.machineStats.map((machine: MachineStatistics) => ({
           machine: machine.machine,
@@ -67,7 +79,7 @@ export function DashboardPage() {
     };
 
     fetchAndCalculateStatistics();
-  }, [selectedPeriod]);
+  }, [selectedPeriod, selectedYear]);
 
   return (
     <div className="w-full">
@@ -105,6 +117,16 @@ export function DashboardPage() {
           value={statistics.uniqueUsers}
           description="Diferentes usuarios detectados"
           icon={<RiAdminLine size={27} />}
+        />
+      </div>
+
+      <div className="mb-8">
+        <MonthlyAccessChart 
+          data={monthlyStats} 
+          title="Accesos por Mes"
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
+          availableYears={availableYears}
         />
       </div>
 
