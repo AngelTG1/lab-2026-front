@@ -36,8 +36,17 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
   const filteredUsers = users.filter(user => {
     const fullName = (user as any).fullName ?? user.userName;
     const email = user.email ?? '';
+    const name = (user as any).name ?? '';
+    const apellidoPaterno = (user as any).apellidoPaterno ?? '';
+    const apellidoMaterno = (user as any).apellidoMaterno ?? '';
     const searchLower = searchTerm.toLowerCase();
-    return fullName.toLowerCase().includes(searchLower) || email.toLowerCase().includes(searchLower);
+    return (
+      fullName.toLowerCase().includes(searchLower) ||
+      email.toLowerCase().includes(searchLower) ||
+      name.toLowerCase().includes(searchLower) ||
+      apellidoPaterno.toLowerCase().includes(searchLower) ||
+      apellidoMaterno.toLowerCase().includes(searchLower)
+    );
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
@@ -67,6 +76,9 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">ID</th>
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Usuario</th>
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Email</th>
+              <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Nombre</th>
+              <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Apellido Paterno</th>
+              <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Apellido Materno</th>
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Creado</th>
               {/* <th className="px-4 py-3 text-left font-semibold text-slate-500">Estatus</th> */}
               <th className="px-3 py-3 text-right font-semibold text-slate-500">Acciones</th>
@@ -110,6 +122,9 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
                       <div className="text-slate-500 text-xs">{user.hashMethod}</div>
                     </td>
                     <td className="px-3 py-4 text-slate-700">{user.email ?? '-'}</td>
+                    <td className="px-3 py-4 text-slate-700">{(user as any).name ?? '-'}</td>
+                    <td className="px-3 py-4 text-slate-700">{(user as any).apellidoPaterno ?? '-'}</td>
+                    <td className="px-3 py-4 text-slate-700">{(user as any).apellidoMaterno ?? '-'}</td>
                     <td className="px-3 py-4 text-slate-600">{formatDate(user.createdAt)}</td>
                     {/* <td className="px-4 py-4">
                       <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${statusColor}`}>
@@ -123,14 +138,7 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
                           onClick={() => console.log('view', user.userId ?? user.userName)}
                           className="rounded-md border border-blue-200 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50"
                         >
-                          Actualizar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => console.log('delete', user.userId ?? user.userName)}
-                          className="rounded-md border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
-                        >
-                          Eliminar
+                          Ver
                         </button>
                       </div>
                     </td>

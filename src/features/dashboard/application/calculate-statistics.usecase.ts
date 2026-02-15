@@ -19,6 +19,7 @@ export interface DashboardStatistics {
 export interface MonthlyStats {
   month: string;
   accesses: number;
+  activeMachines: number;
 }
 
 export class CalculateStatisticsUsecase {
@@ -122,7 +123,7 @@ export class CalculateStatisticsUsecase {
   }
 
   calculateMonthlyAccess(logs: PginaLog[], year?: number): MonthlyStats[] {
-    const monthlyMap = new Map<string, number>();
+    const monthlyMap = new Map<string, { accesses: number; machines: Set<string> }>();
     
     // Usar el año actual si no se proporciona uno
     const selectedYear = year || new Date().getFullYear();
@@ -132,24 +133,29 @@ export class CalculateStatisticsUsecase {
 
     // Inicializar los 12 meses del año
     months.forEach((month) => {
-      monthlyMap.set(month, 0);
+      monthlyMap.set(month, { accesses: 0, machines: new Set() });
     });
 
-    // Contar accesos por mes del año seleccionado
+    // Contar accesos y máquinas únicas por mes del año seleccionado
     logs.forEach((log) => {
       const logDate = new Date(log.timeStamp);
       // Solo contar logs del año seleccionado
       if (logDate.getFullYear() === selectedYear) {
         const monthIndex = logDate.getMonth();
         const monthKey = months[monthIndex];
+        const monthData = monthlyMap.get(monthKey)!;
         
-        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + 1);
+        monthData.accesses++;
+        if (log.machine) {
+          monthData.machines.add(log.machine);
+        }
       }
     });
 
     return months.map((month) => ({
       month: month.charAt(0).toUpperCase() + month.slice(1),
-      accesses: monthlyMap.get(month) || 0,
+      accesses: monthlyMap.get(month)?.accesses || 0,
+      activeMachines: monthlyMap.get(month)?.machines.size || 0,
     }));
   }
 
@@ -162,5 +168,118 @@ export class CalculateStatisticsUsecase {
     });
 
     return Array.from(yearsSet).sort((a, b) => a - b);
+  }
+
+  executeGlobal(logs: PginaLog[]): DashboardStatistics {
+    // Calcular estadísticas de TODAS las máquinas sin filtrar por fecha
+    const machineMap = new Map<string, MachineStatistics>();
+
+    logs.forEach((log) => {
+      const machine = log.machine || 'Sin máquina especificada';
+
+      if (!machineMap.has(machine)) {
+        machineMap.set(machine, {
+          machine,
+          totalAccess: 0,
+          uniqueUsers: new Set(),
+          lastAccess: new Date(log.timeStamp),
+          ip: log.ip,
+          host: log.host,
+        });
+      }
+
+      const stats = machineMap.get(machine)!;
+      stats.totalAccess++;
+
+      // Extraer nombre de usuario del mensaje si está disponible
+      if (log.message) {
+        const userMatch = log.message.match(/user[=:\s]+(\w+)/i);
+        if (userMatch) {
+          stats.uniqueUsers.add(userMatch[1]);
+        }
+      }
+
+      // Actualizar último acceso
+      const logDate = new Date(log.timeStamp);
+      if (logDate > stats.lastAccess) {
+        stats.lastAccess = logDate;
+      }
+    });
+
+    // Convertir mapa a array y calcular el total de usuarios únicos
+    const machineStats = Array.from(machineMap.values()).sort(
+      (a, b) => b.totalAccess - a.totalAccess
+    );
+
+    const allUniqueUsers = new Set<string>();
+    machineStats.forEach((stat) => {
+      stat.uniqueUsers.forEach((user) => allUniqueUsers.add(user));
+    });
+
+    return {
+      totalAccess: logs.length,
+      totalMachines: machineStats.length,
+      uniqueUsers: allUniqueUsers.size,
+      machineStats,
+    };
+  }
+
+  executeByYear(logs: PginaLog[], year: number): DashboardStatistics {
+    // Calcular estadísticas de máquinas filtradas por año
+    const machineMap = new Map<string, MachineStatistics>();
+
+    const filteredLogs = logs.filter((log) => {
+      const logDate = new Date(log.timeStamp);
+      return logDate.getFullYear() === year;
+    });
+
+    filteredLogs.forEach((log) => {
+      const machine = log.machine || 'Sin máquina especificada';
+
+      if (!machineMap.has(machine)) {
+        machineMap.set(machine, {
+          machine,
+          totalAccess: 0,
+          uniqueUsers: new Set(),
+          lastAccess: new Date(log.timeStamp),
+          ip: log.ip,
+          host: log.host,
+        });
+      }
+
+      const stats = machineMap.get(machine)!;
+      stats.totalAccess++;
+
+      // Extraer nombre de usuario del mensaje si está disponible
+      if (log.message) {
+        const userMatch = log.message.match(/user[=:\s]+(\w+)/i);
+        if (userMatch) {
+          stats.uniqueUsers.add(userMatch[1]);
+        }
+      }
+
+      // Actualizar último acceso
+      const logDate = new Date(log.timeStamp);
+      if (logDate > stats.lastAccess) {
+        stats.lastAccess = logDate;
+      }
+    });
+
+    // Convertir mapa a array y calcular el total de usuarios únicos
+    const machineStats = Array.from(machineMap.values()).sort(
+      (a, b) => b.totalAccess - a.totalAccess
+    );
+
+    const allUniqueUsers = new Set<string>();
+    machineStats.forEach((stat) => {
+      stat.uniqueUsers.forEach((user) => allUniqueUsers.add(user));
+    });
+
+    return {
+      totalAccess: filteredLogs.length,
+      totalMachines: machineStats.length,
+      uniqueUsers: allUniqueUsers.size,
+      machineStats,
+    };
   }
 }

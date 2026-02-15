@@ -1,7 +1,6 @@
 import type { AuthSession } from '../domain/auth.entity';
 import type { AuthRepository, LoginInput, RegisterInput } from '../domain/auth.repository';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+import { API_BASE_URL } from '../../../shared/http/config';
 
 class HttpAuthRepository implements AuthRepository {
   async login(input: LoginInput): Promise<AuthSession> {

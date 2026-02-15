@@ -1,8 +1,7 @@
 import { PginaLog } from '../domain/pginalog.entity';
 import type { PginaLogRepository } from '../domain/pginalog.repository';
 import { useAuthStore } from '../../../shared/store/auth.store';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+import { API_BASE_URL } from '../../../shared/http/config';
 
 class HttpPginaLogRepository implements PginaLogRepository {
   async findAll(): Promise<PginaLog[]> {

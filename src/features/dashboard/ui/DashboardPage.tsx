@@ -59,8 +59,11 @@ export function DashboardPage() {
         const years = statsUsecase.getAvailableYears(logs);
         setAvailableYears(years);
 
-        // Preparar datos para la tabla
-        const tableData = stats.machineStats.map((machine: MachineStatistics) => ({
+        // Obtener estadísticas de máquinas del año seleccionado
+        const yearStats = statsUsecase.executeByYear(logs, selectedYear);
+
+        // Preparar datos para la tabla filtrados por año
+        const tableData = yearStats.machineStats.map((machine: MachineStatistics) => ({
           machine: machine.machine,
           totalAccess: machine.totalAccess,
           uniqueUsers: machine.uniqueUsers.size,

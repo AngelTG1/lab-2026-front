@@ -1,8 +1,7 @@
 import { User } from '../domain/user.entity';
 import type { CreateUserInput, UsersRepository } from '../domain/users.repository';
 import { useAuthStore } from '../../../shared/store/auth.store';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+import { API_BASE_URL } from '../../../shared/http/config';
 
 class HttpUsersRepository implements UsersRepository {
   async findAll(): Promise<User[]> {
@@ -33,6 +32,9 @@ class HttpUsersRepository implements UsersRepository {
           passwordHash: item.passwordHash ?? item.password ?? '',
           hashMethod: item.hashMethod ?? item.hash_method ?? 'bcrypt',
           email: item.email ?? item.email,
+          name: item.name ?? item.name,
+          apellidoPaterno: item.apellidoPaterno ?? item.apellido_paterno,
+          apellidoMaterno: item.apellidoMaterno ?? item.apellido_materno,
           createdAt: item.createdAt ? new Date(item.createdAt) : item.created_at ? new Date(item.created_at) : undefined,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : item.updated_at ? new Date(item.updated_at) : undefined,
         }),
@@ -69,6 +71,9 @@ class HttpUsersRepository implements UsersRepository {
       passwordHash: data.passwordHash ?? '',
       hashMethod: data.hashMethod ?? 'bcrypt',
       email: data.email ?? undefined,
+      name: data.name ?? input.name,
+      apellidoPaterno: data.apellidoPaterno ?? input.apellidoPaterno,
+      apellidoMaterno: data.apellidoMaterno ?? input.apellidoMaterno,
       createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
       updatedAt: data.updatedAt ? new Date(data.updatedAt) : undefined,
     });

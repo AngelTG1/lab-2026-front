@@ -2,12 +2,15 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 type CreateUserFormProps = {
-  onSubmit: (values: { userName: string; email: string; password: string }) => Promise<void>;
+  onSubmit: (values: { userName: string; email: string; password: string; name: string; apellidoPaterno: string; apellidoMaterno: string }) => Promise<void>;
   loading?: boolean;
 };
 
 export function CreateUserForm({ onSubmit, loading = false }: CreateUserFormProps) {
   const [userName, setUserName] = useState('');
+  const [name, setName] = useState('');
+  const [apellidoPaterno, setApellidoPaterno] = useState('');
+  const [apellidoMaterno, setApellidoMaterno] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,10 +21,13 @@ export function CreateUserForm({ onSubmit, loading = false }: CreateUserFormProp
     setError(null);
     setSuccess(null);
     try {
-      await onSubmit({ userName, email, password });
+      await onSubmit({ userName, email, password, name, apellidoPaterno, apellidoMaterno });
       setSuccess('Usuario creado correctamente');
       setUserName('');
       setEmail('');
+      setName('');
+      setApellidoPaterno('');
+      setApellidoMaterno('');
       setPassword('');
     } catch (err: any) {
       setError(err?.message || 'No se pudo crear el usuario');
@@ -46,6 +52,42 @@ export function CreateUserForm({ onSubmit, loading = false }: CreateUserFormProp
           required
         />
       </label>
+      <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+        <span>Nombre</span>
+        <input
+          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-base text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/60"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre"
+          required
+        />
+      </label>
+
+      <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+        <span>Apellido paterno</span>
+        <input
+          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-base text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/60"
+          type="text"
+          value={apellidoPaterno}
+          onChange={(e) => setApellidoPaterno(e.target.value)}
+          placeholder="Apellido paterno"
+          required
+        />
+      </label>
+
+      <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+        <span>Apellido materno</span>
+        <input
+          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-base text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/60"
+          type="text"
+          value={apellidoMaterno}
+          onChange={(e) => setApellidoMaterno(e.target.value)}
+          placeholder="Apellido materno"
+          required
+        />
+      </label>
+
 
       <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
         <span>Correo electrónico</span>

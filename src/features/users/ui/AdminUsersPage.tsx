@@ -49,28 +49,58 @@ export function AdminUsersPage() {
     // Try parse as objects (using headers)
     const objRows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-    let items: Array<{ userName?: string; password?: string; email?: string }> = [];
+    type ImportRow = {
+      userName?: string;
+      password?: string;
+      email?: string;
+      name?: string;
+      apellidoPaterno?: string;
+      apellidoMaterno?: string;
+    };
+
+    let items: ImportRow[] = [];
 
     if (objRows.length > 0 && typeof objRows[0] === 'object' && !Array.isArray(objRows[0])) {
       const headerKeys = Object.keys(objRows[0]);
       const normalize = (s: string) => s.toLowerCase().replace(/\s|_/g, '');
       const userKey = headerKeys.find((k) => ['username', 'user', 'username', 'usuario', 'userName'.toLowerCase()].includes(normalize(k)));
-      const emailKey = headerKeys.find((k) => ['email', 'correo', 'correo electrónico'].includes(normalize(k)));
+      const emailKey = headerKeys.find((k) => ['email', 'correo', 'correo electrónico', 'correoelectronico'].includes(normalize(k)));
       const passKey = headerKeys.find((k) => ['password', 'pass', 'contraseña', 'clave'].includes(normalize(k)));
+      const nameKey = headerKeys.find((k) => ['nombre', 'name'].includes(normalize(k)));
+      const apPatKey = headerKeys.find((k) => ['apellidopaterno', 'apellido paterno', 'apellido_paterno'].includes(normalize(k)));
+      const apMatKey = headerKeys.find((k) => ['apellidomaterno', 'apellido materno', 'apellido_materno'].includes(normalize(k)));
 
       if (userKey && emailKey && passKey) {
-        items = objRows.map((r) => ({ userName: String(r[userKey] ?? '').trim(), email: String(r[emailKey] ?? '').trim(), password: String(r[passKey] ?? '').trim() }));
+        items = objRows
+          .map((r) => ({
+            userName: String(r[userKey] ?? '').trim(),
+            email: String(r[emailKey] ?? '').trim(),
+            password: String(r[passKey] ?? '').trim(),
+            name: nameKey ? String(r[nameKey] ?? '').trim() : '',
+            apellidoPaterno: apPatKey ? String(r[apPatKey] ?? '').trim() : '',
+            apellidoMaterno: apMatKey ? String(r[apMatKey] ?? '').trim() : '',
+          }))
+          .filter((r) => r.userName && r.password && r.name && r.apellidoPaterno && r.apellidoMaterno);
       } else {
         // Fallback: try common header names
         const guessedUserKey = headerKeys.find((k) => normalize(k).includes('user'));
         const guessedPassKey = headerKeys.find((k) => normalize(k).includes('pass') || normalize(k).includes('clave') || normalize(k).includes('contraseña'));
         if (guessedUserKey && guessedPassKey) {
-          items = objRows.map((r) => ({ userName: String(r[guessedUserKey] ?? '').trim(), password: String(r[guessedPassKey] ?? '').trim() }));
+          items = objRows
+            .map((r) => ({
+              userName: String(r[guessedUserKey] ?? '').trim(),
+              password: String(r[guessedPassKey] ?? '').trim(),
+              email: emailKey ? String(r[emailKey] ?? '').trim() : '',
+              name: nameKey ? String(r[nameKey] ?? '').trim() : '',
+              apellidoPaterno: apPatKey ? String(r[apPatKey] ?? '').trim() : '',
+              apellidoMaterno: apMatKey ? String(r[apMatKey] ?? '').trim() : '',
+            }))
+            .filter((r) => r.userName && r.password && r.name && r.apellidoPaterno && r.apellidoMaterno);
         }
       }
     }
 
-    // If still empty, parse as arrays and take first two columns
+    // If still empty, parse as arrays and take first columns
     if (items.length === 0) {
       const arrRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
       // If first row looks like headers, skip it when it contains non-empty strings
@@ -83,7 +113,21 @@ export function AdminUsersPage() {
         if (!row) continue;
         const userName = row[0] ?? '';
         const password = row[1] ?? '';
-        items.push({ userName: String(userName).trim(), password: String(password).trim() });
+        const email = row[2] ?? '';
+        const name = row[3] ?? '';
+        const apellidoPaterno = row[4] ?? '';
+        const apellidoMaterno = row[5] ?? '';
+        const record = {
+          userName: String(userName).trim(),
+          password: String(password).trim(),
+          email: String(email).trim(),
+          name: String(name).trim(),
+          apellidoPaterno: String(apellidoPaterno).trim(),
+          apellidoMaterno: String(apellidoMaterno).trim(),
+        };
+        if (record.userName && record.password && record.name && record.apellidoPaterno && record.apellidoMaterno) {
+          items.push(record);
+        }
       }
     }
 
@@ -100,7 +144,14 @@ export function AdminUsersPage() {
         continue;
       }
       try {
-        await createUserUsecase.execute({ userName: it.userName, password: it.password, email: it.email });
+        await createUserUsecase.execute({
+          userName: it.userName,
+          password: it.password,
+          email: it.email,
+          name: it.name ?? '',
+          apellidoPaterno: it.apellidoPaterno ?? '',
+          apellidoMaterno: it.apellidoMaterno ?? '',
+        });
         successes.push(it.userName);
       } catch (err: any) {
         failures.push(`${it.userName}: ${err?.message || 'error'}`);

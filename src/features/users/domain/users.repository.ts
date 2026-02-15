@@ -4,6 +4,9 @@ export type CreateUserInput = {
   userName: string;
   password: string;
   email?: string;
+  name: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
 };
 
 export interface UsersRepository {

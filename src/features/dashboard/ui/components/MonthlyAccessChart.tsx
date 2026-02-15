@@ -23,7 +23,11 @@ export function MonthlyAccessChart({ data, title = 'Accesos por Mes', selectedYe
         setIsModalOpen(false);
     };
     // Encontrar el valor máximo para escalar las barras (solo entre los meses con datos)
-    const maxValue = Math.max(...data.filter(d => d.accesses > 0).map(d => d.accesses), 1);
+    const maxValue = Math.max(
+        ...data.filter(d => d.accesses > 0).map(d => d.accesses),
+        ...data.filter(d => d.activeMachines > 0).map(d => d.activeMachines),
+        1
+    );
 
     // Calcular altura de las barras (máximo 200px)
     const barHeightMultiplier = 200 / maxValue;
@@ -47,7 +51,7 @@ export function MonthlyAccessChart({ data, title = 'Accesos por Mes', selectedYe
 
                     {/* Modal para seleccionar año - Aparece debajo del botón */}
                     {isModalOpen && (
-                        <div className="absolute top-full right-0 mt-3 bg-[#F9F9FB] rounded-lg p-3 w-80 shadow-lg border border-lightGray z-50">
+                        <div className="absolute top-full right-0 mt-3 bg-grayLight rounded-lg p-3 w-80 shadow-lg border border-lightGray z-50">
                             <div className="flex items-center justify-between mb-2 bg-white w-full p-2.5 rounded-lg border border-lightGray">
                                 <h3 className="text-2xl font-semibold text-slate-900">Años</h3>
                                 <button
@@ -84,41 +88,64 @@ export function MonthlyAccessChart({ data, title = 'Accesos por Mes', selectedYe
                 </div>
             </div>
             <div className="bg-white border border-lightGray rounded-lg p-4">
-                <h2 className="text-lg font-semibold text-slate-900 mb-6">{title}</h2>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+                    <div className="flex gap-4 text-xs">
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-green-400 rounded"></div>
+                            <span className="text-slate-600">Computadoras</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-cyan-200 rounded"></div>
+                            <span className="text-slate-600">Accesos</span>
+                        </div>
+                    </div>
+                </div>
 
                 {data.length === 0 ? (
+                    <div className="flex items-center justify-center h-64">
+                        <p className="text-slate-500">No hay datos disponibles</p>
+                    </div>
+                ) : data.every(d => d.accesses === 0 && d.activeMachines === 0) ? (
                     <div className="flex items-center justify-center h-64">
                         <p className="text-slate-500">No hay datos disponibles</p>
                     </div>
                 ) : (
                     <div className="flex items-end justify-around gap-2 h-64">
                         {data.map((month) => {
-                            const hasData = month.accesses > 0;
-                            const bgColor = hasData ? 'bg-cyan-200 hover:bg-cyan-300' : 'bg-gray-300 hover:bg-gray-400';
+                            const hasAccessData = month.accesses > 0;
+                            const hasMachineData = month.activeMachines > 0;
 
                             return (
                                 <div
                                     key={month.month}
                                     className="flex flex-col items-center gap-2 flex-1"
                                 >
-                                    {/* Barra */}
-                                    <div className="w-full flex flex-col items-center justify-end">
-                                        <div className="relative w-full max-w-12 flex justify-center">
+                                    {/* Barras */}
+                                    <div className="w-full flex flex-row items-end justify-center gap-1 h-48">
+                                        {/* Barra de Máquinas Activas */}
+                                        <div className="relative flex-1 flex flex-col items-center justify-end">
                                             <div
-                                                className={`${bgColor} rounded-t-lg w-full transition-all duration-300 cursor-pointer`}
+                                                className={`${hasMachineData ? 'bg-green-400' : 'bg-gray-300'} rounded-t-lg w-full transition-all duration-300 cursor-pointer`}
                                                 style={{
-                                                    height: `${hasData ? Math.max(month.accesses * barHeightMultiplier, 5) : 10}px`,
-                                                    minWidth: '30px'
+                                                    height: `${hasMachineData ? Math.max(month.activeMachines * barHeightMultiplier, 5) : 10}px`,
+                                                    minWidth: '20px'
+                                                }}
+                                                title={`${month.month}: ${month.activeMachines} máquinas`}
+                                            />
+                                        </div>
+                                        
+                                        {/* Barra de Accesos */}
+                                        <div className="relative flex-1 flex flex-col items-center justify-end">
+                                            <div
+                                                className={`${hasAccessData ? 'bg-cyan-200 hover:bg-cyan-300' : 'bg-gray-300 hover:bg-gray-400'} rounded-t-lg w-full transition-all duration-300 cursor-pointer`}
+                                                style={{
+                                                    height: `${hasAccessData ? Math.max(month.accesses * barHeightMultiplier, 5) : 10}px`,
+                                                    minWidth: '20px'
                                                 }}
                                                 title={`${month.month}: ${month.accesses} accesos`}
                                             />
                                         </div>
-                                        {/* Valor arriba de la barra */}
-                                        {month.accesses > 0 && (
-                                            <span className="text-xs font-medium text-slate-700 mt-1">
-                                                {month.accesses}
-                                            </span>
-                                        )}
                                     </div>
                                    
                                     {/* Etiqueta del mes */}
