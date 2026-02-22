@@ -12,7 +12,7 @@ export function AppLayout() {
 
       <div className={`flex-1 transition-all duration-300 ${isAuthenticated ? 'ml-18 md:ml-52' : ''}`}>
         {isAuthenticated && <Header />}
-        <div className='px-10 py-5'>
+        <div className='px-10 py-5 2xl:max-w-7xl mx-auto'>
           <Outlet />          
         </div>
       </div>

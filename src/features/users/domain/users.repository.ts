@@ -12,4 +12,5 @@ export type CreateUserInput = {
 export interface UsersRepository {
   findAll(): Promise<User[]>;
   createUser(input: CreateUserInput): Promise<User>;
+  updateActivation(userId: number, isActive: boolean): Promise<User>;
 }

@@ -3,10 +3,12 @@ export type UserProps = {
   userName: string;
   passwordHash: string;
   hashMethod: string;
-  email?: string;
+  email?: string | null;
   name: string;
   apellidoPaterno: string;
   apellidoMaterno: string;
+  isActive?: boolean;
+  desactivedAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -16,10 +18,12 @@ export class User {
   userName: string;
   passwordHash: string;
   hashMethod: string;
-  email?: string;
+  email?: string | null;
   name: string;
   apellidoPaterno: string;
   apellidoMaterno: string;
+  isActive: boolean;
+  desactivedAt: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 
@@ -32,6 +36,8 @@ export class User {
     this.name = props.name;
     this.apellidoPaterno = props.apellidoPaterno;
     this.apellidoMaterno = props.apellidoMaterno;
+    this.isActive = props.isActive ?? true;
+    this.desactivedAt = props.desactivedAt ?? null;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -46,6 +52,8 @@ export class User {
       name: this.name,
       apellidoPaterno: this.apellidoPaterno,
       apellidoMaterno: this.apellidoMaterno,
+      isActive: this.isActive,
+      desactivedAt: this.desactivedAt,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

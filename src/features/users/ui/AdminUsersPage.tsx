@@ -3,14 +3,16 @@ import type { ChangeEvent } from 'react';
 import * as XLSX from 'xlsx';
 import { CreateUserUsecase } from '../application/create-user.usecase';
 import { GetUsersUsecase } from '../application/get-users.usecase';
+import { UpdateUserActivationUsecase } from '../application/update-user-activation.usecase';
 import { usersRepository } from '../infrastructure/users.api';
 import { CreateUserForm } from './CreateUserForm';
 import { UserTable } from './components/UserTable';
-import type { User } from '../domain/user.entity';
+import { User } from '../domain/user.entity';
 import { PginaLogTable } from '../../pginalog/ui/PginaLogTable';
 
 const createUserUsecase = new CreateUserUsecase(usersRepository);
 const getUsersUsecase = new GetUsersUsecase(usersRepository);
+const updateUserActivationUsecase = new UpdateUserActivationUsecase(usersRepository);
 
 export function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -21,6 +23,8 @@ export function AdminUsersPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [confirmUser, setConfirmUser] = useState<{ id: number; name: string; nextActive: boolean } | null>(null);
 
   const fetchUsers = async () => {
     setError(null);
@@ -164,6 +168,48 @@ export function AdminUsersPage() {
     setImportResult(summary);
   };
 
+  const handleToggleActivation = async (userId: number, nextActive: boolean) => {
+    setError(null);
+    setUpdatingId(userId);
+    try {
+      const updated = await updateUserActivationUsecase.execute(userId, nextActive);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.userId === (updated.userId ?? userId)
+            ? (() => {
+                const merged: Record<string, unknown> = { ...(u as any) };
+                Object.entries(updated as any).forEach(([key, value]) => {
+                  const allowNull = key === 'desactivedAt';
+                  // si el backend manda null/undefined lo ignoramos para no borrar datos existentes
+                  if (value === undefined) return;
+                  if (value === null && !allowNull) return;
+                  merged[key] = value;
+                });
+                return new User(merged as any);
+              })()
+            : u,
+        ),
+      );
+    } catch (err: any) {
+      setError(err?.message || 'No se pudo actualizar el estado del usuario');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleRequestToggle = (user: User, nextActive: boolean) => {
+    if (typeof user.userId !== 'number') {
+      setError('No se puede actualizar un usuario sin ID');
+      return;
+    }
+    if (!nextActive) {
+      const name = (user as any).fullName ?? user.name ?? user.userName ?? `ID ${user.userId}`;
+      setConfirmUser({ id: user.userId, name, nextActive });
+      return;
+    }
+    void handleToggleActivation(user.userId, nextActive);
+  };
+
   return (
     <div className="flex flex-col gap-8  ">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -219,6 +265,8 @@ export function AdminUsersPage() {
         loading={loadingList}
         error={error}
         onRefresh={fetchUsers}
+        onToggleStatus={handleRequestToggle}
+        updatingId={updatingId}
       />
 
       <PginaLogTable />
@@ -250,6 +298,38 @@ export function AdminUsersPage() {
                 }
               }}
             />
+          </div>
+        </div>
+      ) : null}
+
+      {confirmUser ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-6 space-y-5">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold text-slate-900">Confirmar desactivacion</h2>
+              <p className="text-sm text-slate-600">
+                Estas seguro que deseas desactivar al usuario <span className="font-semibold text-slate-900">{confirmUser.name}</span>?
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmUser(null)}
+                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleToggleActivation(confirmUser.id, false);
+                  setConfirmUser(null);
+                }}
+                className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+              >
+                Desactivar
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

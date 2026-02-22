@@ -6,6 +6,8 @@ type UserTableProps = {
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
+  onToggleStatus: (user: User, nextActive: boolean) => void;
+  updatingId: number | null;
 };
 
 function formatDate(d?: Date | string) {
@@ -23,7 +25,7 @@ function formatDate(d?: Date | string) {
   }
 }
 
-export function UserTable({ users, loading, error, onRefresh }: UserTableProps) {
+export function UserTable({ users, loading, error, onRefresh, onToggleStatus, updatingId }: UserTableProps) {
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const PAGE_SIZE = 10;
@@ -33,8 +35,8 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
     if (page > maxPage) setPage(maxPage);
   }, [users.length, page]);
 
-  const filteredUsers = users.filter(user => {
-    const fullName = (user as any).fullName ?? user.userName;
+  const filteredUsers = users.filter((user) => {
+    const fullName = (user as any).fullName ?? user.userName ?? '';
     const email = user.email ?? '';
     const name = (user as any).name ?? '';
     const apellidoPaterno = (user as any).apellidoPaterno ?? '';
@@ -79,8 +81,8 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Nombre</th>
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Apellido Paterno</th>
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Apellido Materno</th>
+              <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Estado</th>
               <th className="px-3 py-3 text-left font-medium text-[#6F6F6F]">Creado</th>
-              {/* <th className="px-4 py-3 text-left font-semibold text-slate-500">Estatus</th> */}
               <th className="px-3 py-3 text-right font-semibold text-slate-500">Acciones</th>
             </tr>
           </thead>
@@ -88,32 +90,35 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
           <tbody className="divide-y divide-slate-100 bg-white">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-slate-600">
+                <td colSpan={9} className="px-3 py-8 text-center text-slate-600">
                   Cargando usuarios...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-slate-600">
+                <td colSpan={9} className="px-3 py-8 text-center text-slate-600">
                   No hay usuarios para mostrar.
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-slate-600">
+                <td colSpan={9} className="px-3 py-8 text-center text-slate-600">
                   No hay usuarios que coincidan con la búsqueda.
                 </td>
               </tr>
             ) : visibleUsers.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-slate-600">
+                <td colSpan={9} className="px-3 py-8 text-center text-slate-600">
                   No hay usuarios en esta página.
                 </td>
               </tr>
             ) : (
               visibleUsers.map((user) => {
-                const status = user.email ? 'Activo' : 'Pendiente';
-                const statusColor = user.email ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
+                const status = user.isActive ? 'Activo' : 'Inactivo';
+                const statusColor = user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700';
+                const toggleLabel = user.isActive ? 'Desactivar' : 'Activar';
+                const canToggle = typeof user.userId === 'number';
+                const isUpdating = updatingId === user.userId;
                 return (
                   <tr key={user.userId ?? user.userName} className="hover:bg-slate-50">
                     <td className="px-3 py-4 text-slate-500 text-xs">{user.userId ?? '-'}</td>
@@ -125,14 +130,22 @@ export function UserTable({ users, loading, error, onRefresh }: UserTableProps) 
                     <td className="px-3 py-4 text-slate-700">{(user as any).name ?? '-'}</td>
                     <td className="px-3 py-4 text-slate-700">{(user as any).apellidoPaterno ?? '-'}</td>
                     <td className="px-3 py-4 text-slate-700">{(user as any).apellidoMaterno ?? '-'}</td>
-                    <td className="px-3 py-4 text-slate-600">{formatDate(user.createdAt)}</td>
-                    {/* <td className="px-4 py-4">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${statusColor}`}>
+                    <td className="px-3 py-4">
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusColor}`}>
                         {status}
                       </span>
-                    </td> */}
+                    </td>
+                    <td className="px-3 py-4 text-slate-600">{formatDate(user.createdAt)}</td>
                     <td className="px-3 py-4 text-right">
-                      <div className="inline-flex items-center gap-2">
+                      <div className="inline-flex items-center gap-2 justify-end">
+                        <button
+                          type="button"
+                          disabled={!canToggle || isUpdating}
+                          onClick={() => canToggle && onToggleStatus(user, !user.isActive)}
+                          className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isUpdating ? 'Guardando...' : toggleLabel}
+                        </button>
                         <button
                           type="button"
                           onClick={() => console.log('view', user.userId ?? user.userName)}
